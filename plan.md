@@ -87,10 +87,17 @@ Implementación completa y pruebas end-to-end.
   - Sin errores de pantalla roja; logs limpios.
 
 ## 9) Acciones Siguientes (Next Actions)
-1. Confirmación de este plan (diseño como imagen).
-2. Implementación directa de Fase 2 (sin POC separado), solicitando diseño detallado al `design_agent` al iniciar FE.
-3. Crear semilla y endpoints; luego UI completa.
-4. Ejecutar testing agent y corregir cualquier hallazgo.
+1. ✅ Confirmación de este plan (diseño como imagen) - COMPLETADO
+2. ✅ Implementación directa de Fase 2 (sin POC separado), solicitando diseño detallado al `design_agent` al iniciar FE - COMPLETADO
+3. ✅ Crear semilla y endpoints; luego UI completa - COMPLETADO
+4. ✅ Ejecutar testing agent y corregir cualquier hallazgo - COMPLETADO
+
+## STATUS: FASE 2 COMPLETADA ✅
+- Backend implementado con todos los endpoints funcionando
+- Frontend implementado con selección independiente de tarjetas
+- Testing completado al 100% (32/32 tests backend + UI completo)
+- Bug crítico corregido (parámetro range → range_type)
+- PROBLEMA ORIGINAL RESUELTO: Cada tarjeta ahora muestra su propio contenido único
 
 ## 10) Criterios de Éxito
 - Cada tarjeta controla su propio menú/historial/estado (sin “mirroring”).
