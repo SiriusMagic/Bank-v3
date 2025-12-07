@@ -151,15 +151,15 @@ async def freeze_card(card_id: str, request: FreezeRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 @api_router.get("/cards/{card_id}/history")
-async def get_history(card_id: str, range: str = "semana"):
+async def get_history(card_id: str, range_type: str = "semana"):
     """Get historical spending data for charts"""
     try:
         # Calculate date range
         now = datetime.now(timezone.utc)
-        if range == "hoy":
+        if range_type == "hoy":
             start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
             days = 1
-        elif range == "semana":
+        elif range_type == "semana":
             start_date = now - timedelta(days=7)
             days = 7
         else:  # personaliza
