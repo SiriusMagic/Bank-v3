@@ -1,52 +1,139 @@
-import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
+import './App.css';
+import axios from 'axios';
+import Sidebar from './components/Sidebar';
+import CardItem from './components/CardItem';
+import CardDetailPanel from './components/CardDetailPanel';
+import { Button } from './components/ui/button';
+import { Search } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const Home = () => {
-  const helloWorldApi = async () => {
+function App() {
+  const [cards, setCards] = useState([]);
+  const [selectedCardId, setSelectedCardId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [seeded, setSeeded] = useState(false);
+
+  useEffect(() => {
+    initializeApp();
+  }, []);
+
+  const initializeApp = async () => {
     try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
+      // Try to fetch cards first
+      const response = await axios.get(`${API}/cards`);
+      if (response.data && response.data.length > 0) {
+        setCards(response.data);
+        setSelectedCardId(response.data[0].id);
+        setSeeded(true);
+      } else {
+        // No cards found, need to seed
+        setSeeded(false);
+      }
+    } catch (error) {
+      console.error('Error fetching cards:', error);
+      setSeeded(false);
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+  const handleSeedData = async () => {
+    try {
+      setLoading(true);
+      await axios.post(`${API}/dev/seed`);
+      await initializeApp();
+    } catch (error) {
+      console.error('Error seeding data:', error);
+      setLoading(false);
+    }
+  };
+
+  const handleCardSelect = (cardId) => {
+    setSelectedCardId(cardId);
+  };
+
+  const handleCardUpdate = (updatedCard) => {
+    setCards(cards.map(card => card.id === updatedCard.id ? updatedCard : card));
+  };
+
+  const selectedCard = cards.find(card => card.id === selectedCardId);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[hsl(var(--background))]">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-[#00CED1] mb-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>aira</div>
+          <p className="text-muted-foreground">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!seeded) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[hsl(var(--background))]">
+        <div className="text-center space-y-4">
+          <div className="text-3xl font-bold text-[#00CED1] mb-4" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>aira</div>
+          <p className="text-muted-foreground mb-4">No hay tarjetas disponibles</p>
+          <Button onClick={handleSeedData} className="bg-[#00CED1] hover:bg-[#00B3B5]">
+            Cargar datos de ejemplo
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
+    <div className="flex min-h-screen bg-[hsl(var(--background))]" data-testid="app-container">
+      <Sidebar />
+      
+      <main className="flex-1 overflow-auto">
+        {/* Header */}
+        <header className="sticky top-0 z-30 bg-white border-b border-[#E5E7EB] px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl font-bold text-[#111827] lg:hidden" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>aira</h1>
+              <div className="hidden md:flex items-center gap-2 bg-[#F7F8FA] px-4 py-2 rounded-lg w-full max-w-sm">
+                <Search size={18} className="text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Escoger diseños"
+                  className="bg-transparent border-0 outline-none w-full text-sm"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#00CED1] flex items-center justify-center text-white font-semibold">
+                JN
+              </div>
+            </div>
+          </div>
+        </header>
 
-function App() {
-  return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+        {/* Content */}
+        <div className="p-6 space-y-6">
+          {/* Cards Scroller */}
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>Mis Tarjetas</h2>
+            <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide" data-testid="cards-list">
+              {cards.map((card) => (
+                <CardItem
+                  key={card.id}
+                  card={card}
+                  selected={card.id === selectedCardId}
+                  onClick={() => handleCardSelect(card.id)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Card Detail Panel */}
+          <CardDetailPanel card={selectedCard} onCardUpdate={handleCardUpdate} />
+        </div>
+      </main>
     </div>
   );
 }

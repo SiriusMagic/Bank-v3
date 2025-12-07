@@ -1,33 +1,70 @@
 import React from 'react';
-import { Card } from './ui/card.jsx';
-import { Badge } from './ui/badge.jsx';
+import { Card } from './ui/card';
+import { Badge } from './ui/badge';
 import { CreditCard } from 'lucide-react';
 
-export const CardItem = ({ selected, onClick, card }) => {
+const CardItem = ({ card, selected, onClick }) => {
+  const getCardTypeLabel = (type) => {
+    switch (type) {
+      case 'debit':
+        return 'Tarjeta débito';
+      case 'credit':
+        return 'Tarjeta de crédito';
+      case 'virtual':
+        return 'Tarjeta desechable';
+      default:
+        return type;
+    }
+  };
+
+  const getGradientClass = (theme) => {
+    switch (theme) {
+      case 'turquoise':
+        return 'bg-[linear-gradient(135deg,_#00CED1_0%,_#8EEAD5_60%,_#E5FCFD_100%)]';
+      case 'blue':
+        return 'bg-[linear-gradient(135deg,_#0284C7_0%,_#7DD3FC_60%,_#E0F2FE_100%)]';
+      case 'green':
+        return 'bg-[linear-gradient(135deg,_#0E9F6E_0%,_#6EE7B7_60%,_#D1FAE5_100%)]';
+      default:
+        return 'bg-[linear-gradient(135deg,_#00CED1_0%,_#8EEAD5_60%,_#E5FCFD_100%)]';
+    }
+  };
+
   return (
     <button
       type="button"
       onClick={onClick}
-      data-testid="card-item-button"
-      className={[
-        'snap-start min-w-[280px] text-left rounded-xl',
-        selected ? 'ring-2 ring-[color:hsl(var(--ring))] ring-offset-2 ring-offset-white' : 'ring-0'
-      ].join(' ')}
+      data-testid={`card-item-${card.id}`}
+      className={`snap-start min-w-[300px] text-left transition-all ${
+        selected ? 'ring-2 ring-[#00CED1] ring-offset-2 ring-offset-white scale-105' : 'ring-0 hover:scale-102'
+      }`}
     >
-      <Card className="relative overflow-hidden p-4 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.06)] rounded-xl">
-        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(135deg,_#00CED1_0%,_#8EEAD5_60%,_#E5FCFD_100%)] opacity-90" />
-        <div className="relative flex flex-col gap-3 text-[#0b3b3a]">
+      <Card className="relative overflow-hidden p-5 rounded-xl bg-white shadow-[0_10px_30px_rgba(0,0,0,0.06)] h-[180px]">
+        <div className={`absolute inset-0 pointer-events-none ${getGradientClass(card.color_theme)} opacity-90`} />
+        <div className="relative flex flex-col gap-4 text-white h-full justify-between">
           <div className="flex items-center justify-between">
-            <span className="font-medium">{card.nombre}</span>
-            <CreditCard size={20} aria-hidden="true" />
+            <span className="text-xs font-medium tracking-wide uppercase">aira</span>
+            <CreditCard size={28} aria-hidden="true" className="text-white" />
           </div>
-          <div className="text-2xl font-semibold" data-testid="saldo-actual-text">{card.saldo}</div>
-          <div className="flex items-center gap-2">
-            <Badge className="bg-white/80 text-[#0b3b3a]" data-testid="card-tipo-badge">{card.tipo}</Badge>
-            {card.congelada && <Badge className="bg-black/20 text-[#0b3b3a]" data-testid="card-congelada-badge">Congelada</Badge>}
+          <div>
+            <div className="text-3xl font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+              ${card.balance.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+            </div>
+            <div className="text-sm font-medium mt-1">{card.holder_name}</div>
+          </div>
+          <div className="flex items-center justify-between">
+            <Badge className="bg-white/20 text-white border-0 hover:bg-white/30">
+              {getCardTypeLabel(card.type)}
+            </Badge>
+            {card.frozen && (
+              <Badge className="bg-black/20 text-white border-0">Congelada</Badge>
+            )}
+            <span className="text-xs font-semibold">{card.brand}</span>
           </div>
         </div>
       </Card>
     </button>
   );
 };
+
+export default CardItem;
