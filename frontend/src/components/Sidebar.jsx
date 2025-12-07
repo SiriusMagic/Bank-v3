@@ -48,24 +48,24 @@ const Sidebar = () => {
         </Button>
       </div>
 
-      <nav className="flex-1 px-2 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-2 space-y-0.5 overflow-y-auto">
         {navItems.map((item, index) => (
           <button
             key={index}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-[#111827] rounded-md transition-colors ${
+            className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-[#111827] rounded-md transition-colors ${
               item.active ? 'bg-black/10' : 'hover:bg-black/5'
             } ${collapsed ? 'justify-center' : ''}`}
             data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
             title={collapsed ? item.label : ''}
           >
-            <item.icon size={20} className="flex-shrink-0" />
-            {!collapsed && <span className="truncate">{item.label}</span>}
+            <item.icon size={18} className="flex-shrink-0" />
+            {!collapsed && <span className="truncate text-xs">{item.label}</span>}
           </button>
         ))}
       </nav>
 
-      <div className={`p-4 border-t border-black/10 ${collapsed ? 'text-center' : ''}`}>
-        <p className={`text-xs text-[#111827]/60 font-medium ${collapsed ? 'transform rotate-90 origin-center' : ''}`}>
+      <div className={`px-4 py-3 border-t border-black/10 flex-shrink-0 ${collapsed ? 'text-center' : ''}`} data-testid="sidebar-version">
+        <p className={`text-xs text-[#111827]/60 font-medium ${collapsed ? 'transform rotate-90 origin-center whitespace-nowrap' : ''}`}>
           {collapsed ? 'v1.0' : 'Versión 1.0.0'}
         </p>
         {!collapsed && (
