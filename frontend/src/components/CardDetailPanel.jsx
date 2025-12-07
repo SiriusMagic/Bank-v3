@@ -37,7 +37,8 @@ const CardDetailPanel = ({ card, onCardUpdate }) => {
     } catch (error) {
       console.error('Error fetching card data:', error);
     } finally {
-      setLoading(false);\n    }
+      setLoading(false);
+    }
   };
 
   const handleFreezeToggle = async (checked) => {
