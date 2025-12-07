@@ -27,7 +27,7 @@ const CardDetailPanel = ({ card, onCardUpdate }) => {
     try {
       setLoading(true);
       const [historyRes, transRes, docsRes] = await Promise.all([
-        axios.get(`${API}/cards/${card.id}/history?range=${activeRange}`),
+        axios.get(`${API}/cards/${card.id}/history?range_type=${activeRange}`),
         axios.get(`${API}/cards/${card.id}/transactions?range=${activeRange}`),
         axios.get(`${API}/cards/${card.id}/documents`)
       ]);
@@ -37,8 +37,7 @@ const CardDetailPanel = ({ card, onCardUpdate }) => {
     } catch (error) {
       console.error('Error fetching card data:', error);
     } finally {
-      setLoading(false);
-    }
+      setLoading(false);\n    }
   };
 
   const handleFreezeToggle = async (checked) => {
