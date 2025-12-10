@@ -194,6 +194,93 @@ async def get_history(card_id: str, range_type: str = "semana"):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
+@api_router.post("/cards/create-disposable")
+async def create_disposable_card(request: CreateDisposableCardRequest):
+    """Create a new disposable debit card"""
+    try:
+        # Generate random card data
+        import uuid
+        new_card = {
+            "type": "disposable",
+            "holder_name": "USUARIO AIRA",
+            "brand": request.brand,
+            "balance": 0.0,
+            "frozen": False,
+            "last4": str(random.randint(1000, 9999)),
+            "exp_month": "12",
+            "exp_year": "2026",
+            "color_theme": "purple" if request.brand == "Mastercard" else "orange",
+            "cashback": 0.0
+        }
+        
+        result = await db.cards.insert_one(new_card)
+        new_card["_id"] = result.inserted_id
+        
+        return serialize_doc(new_card)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@api_router.post("/cards/{card_id}/return-funds")
+async def return_funds(card_id: str):
+    """Return funds from card to vault"""
+    try:
+        card = await db.cards.find_one({"_id": ObjectId(card_id)})
+        if not card:
+            raise HTTPException(status_code=404, detail="Card not found")
+        
+        amount = card.get("balance", 0)
+        if amount <= 0:
+            raise HTTPException(status_code=400, detail="No funds to return")
+        
+        # Update card balance
+        await db.cards.update_one(
+            {"_id": ObjectId(card_id)},
+            {"$set": {"balance": 0.0}}
+        )
+        
+        # Update vault (assuming there's a vault collection)
+        vault = await db.vault.find_one({})
+        if vault:
+            await db.vault.update_one(
+                {"_id": vault["_id"]},
+                {"$inc": {"balance": amount}}
+            )
+        
+        return {"success": True, "amount_returned": amount}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@api_router.delete("/cards/{card_id}/destroy")
+async def destroy_card(card_id: str):
+    """Destroy a disposable card and return funds to vault"""
+    try:
+        card = await db.cards.find_one({"_id": ObjectId(card_id)})
+        if not card:
+            raise HTTPException(status_code=404, detail="Card not found")
+        
+        # Only disposable cards can be destroyed
+        if card.get("type") not in ["disposable", "virtual"]:
+            raise HTTPException(status_code=400, detail="Only disposable cards can be destroyed")
+        
+        amount = card.get("balance", 0)
+        
+        # Return funds to vault if any
+        if amount > 0:
+            vault = await db.vault.find_one({})
+            if vault:
+                await db.vault.update_one(
+                    {"_id": vault["_id"]},
+                    {"$inc": {"balance": amount}}
+                )
+        
+        # Delete the card
+        await db.cards.delete_one({"_id": ObjectId(card_id)})
+        
+        return {"success": True, "amount_returned": amount}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @api_router.post("/dev/seed")
 async def seed_data():
     """Seed the database with sample data"""
