@@ -8,6 +8,7 @@ import Goals from './pages/Goals';
 import Subscriptions from './pages/Subscriptions';
 import Loans from './pages/Loans';
 import Vault from './pages/Vault';
+import Missions from './pages/Missions';
 import { Button } from './components/ui/button';
 import { Search, Menu } from 'lucide-react';
 
@@ -132,6 +133,7 @@ function App() {
             <Route path="/caja-fuerte" element={<Vault />} />
             <Route path="/tarjetas" element={<Cards />} />
             <Route path="/metas" element={<Goals />} />
+            <Route path="/misiones" element={<Missions />} />
             <Route path="/subscripcion" element={<Subscriptions />} />
             <Route path="/prestamos" element={<Loans />} />
             <Route path="*" element={<Navigate to="/tarjetas" replace />} />

@@ -292,6 +292,10 @@ api_router.include_router(subscriptions_router)
 from routes_vault import router as vault_router
 api_router.include_router(vault_router)
 
+# Include missions routes
+from routes_missions import router as missions_router
+api_router.include_router(missions_router)
+
 # Include the router in the main app
 app.include_router(api_router)
 
