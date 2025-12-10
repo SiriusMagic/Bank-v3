@@ -280,6 +280,10 @@ async def seed_data():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# Include goals routes
+from routes_goals import router as goals_router
+api_router.include_router(goals_router)
+
 # Include the router in the main app
 app.include_router(api_router)
 
