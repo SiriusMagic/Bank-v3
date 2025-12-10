@@ -206,25 +206,39 @@ async def get_history(card_id: str, range_type: str = "semana"):
 async def create_disposable_card(request: CreateDisposableCardRequest):
     """Create a new disposable debit card"""
     try:
-        # Generate random card data
-        import uuid
+        # Check vault balance
+        vault = await db.vault.find_one({})
+        if not vault or vault.get("balance", 0) < request.amount:
+            raise HTTPException(status_code=400, detail="Fondos insuficientes en la Bóveda")
+        
+        # Create new card
         new_card = {
             "type": "disposable",
-            "holder_name": "USUARIO AIRA",
+            "holder_name": request.holder_name or "USUARIO AIRA",
             "brand": request.brand,
-            "balance": 0.0,
+            "balance": request.amount,
+            "initial_amount": request.amount,
             "frozen": False,
             "last4": str(random.randint(1000, 9999)),
-            "exp_month": "12",
-            "exp_year": "2026",
+            "exp_month": request.exp_month,
+            "exp_year": request.exp_year,
             "color_theme": "purple" if request.brand == "Mastercard" else "orange",
-            "cashback": 0.0
+            "cashback": 0.0,
+            "created_at": datetime.now(timezone.utc)
         }
         
         result = await db.cards.insert_one(new_card)
         new_card["_id"] = result.inserted_id
         
+        # Deduct from vault
+        await db.vault.update_one(
+            {"_id": vault["_id"]},
+            {"$inc": {"balance": -request.amount}}
+        )
+        
         return serialize_doc(new_card)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
