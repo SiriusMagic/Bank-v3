@@ -364,15 +364,6 @@ async def receive_money_to_card(card_id: str, request: MoneyTransferRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@api_router.get("/cards/destroyed-history")
-async def get_destroyed_history():
-    """Get history of destroyed disposable cards"""
-    try:
-        history = await db.destroyed_cards.find().sort("destroyed_at", -1).to_list(100)
-        return serialize_doc(history)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
 @api_router.post("/dev/seed")
 async def seed_data():
     """Seed the database with sample data"""
