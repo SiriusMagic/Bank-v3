@@ -1,10 +1,6 @@
 [
   {
-    "content": "Implement Vault (Caja Fuerte) section",
-    "status": "completed"
-  },
-  {
     "content": "Test Vault functionality",
-    "status": "in_progress"
+    "status": "completed"
   }
 ]
