@@ -154,6 +154,76 @@ async def get_vault_transactions(limit: int = 10):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
+@router.get("/vault/stats")
+async def get_vault_stats():
+    """Get vault statistics for the current month"""
+    try:
+        from datetime import datetime, timezone
+        
+        vault = await db.vault.find_one({"user_id": "default_user"})
+        if not vault:
+            return {
+                "monthly_income": 0,
+                "monthly_expenses": 0,
+                "flow_chart": []
+            }
+        
+        vault_id = str(vault['_id'])
+        
+        # Get current month transactions
+        now = datetime.now(timezone.utc)
+        start_of_month = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+        
+        transactions = await db.vault_transactions.find({
+            "vault_id": vault_id,
+            "date": {"$gte": start_of_month}
+        }).to_list(1000)
+        
+        # Calculate income and expenses
+        income = sum(t['amount'] for t in transactions if t['transaction_type'] == 'deposit')
+        expenses = sum(t['amount'] for t in transactions if t['transaction_type'] == 'transfer_to_card')
+        
+        # Generate flow chart data (last 7 days)
+        from datetime import timedelta
+        flow_data = []
+        for i in range(7):
+            date = now - timedelta(days=6-i)
+            date_str = date.strftime('%d %b')
+            
+            day_income = sum(
+                t['amount'] for t in transactions 
+                if t['transaction_type'] == 'deposit' and 
+                t['date'].date() == date.date()
+            )
+            
+            day_expenses = sum(
+                t['amount'] for t in transactions 
+                if t['transaction_type'] == 'transfer_to_card' and 
+                t['date'].date() == date.date()
+            )
+            
+            flow_data.append({
+                "date": date_str,
+                "income": day_income,
+                "expenses": day_expenses
+            })
+        
+        # Add mock history to vault
+        history = [serialize_doc(t) for t in transactions[-5:]]
+        await db.vault.update_one(
+            {"_id": vault["_id"]},
+            {"$set": {"history": history}}
+        )
+        
+        return {
+            "monthly_income": income,
+            "monthly_expenses": expenses,
+            "flow_chart": flow_data
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @router.post("/dev/seed-vault")
 async def seed_vault():
     """Seed vault with initial balance"""
