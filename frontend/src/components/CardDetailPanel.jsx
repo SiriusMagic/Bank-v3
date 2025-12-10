@@ -1,182 +1,220 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from './ui/card';
-import { Button } from './ui/button';
-import { Switch } from './ui/switch';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
-import { FileText, RefreshCcw, FolderOpen, ChevronRight, Snowflake } from 'lucide-react';
-import HistoryChart from './HistoryChart';
 import axios from 'axios';
+import { Button } from './ui/button';
+import { Snowflake, Lock, Unlock, Download, Eye, EyeOff, ArrowUpRight, Trash2 } from 'lucide-react';
+import { Card } from './ui/card';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { toast } from './ui/sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const CardDetailPanel = ({ card, onCardUpdate }) => {
-  const [historyData, setHistoryData] = useState([]);
-  const [transactions, setTransactions] = useState([]);
-  const [documents, setDocuments] = useState([]);
-  const [activeRange, setActiveRange] = useState('semana');
-  const [loading, setLoading] = useState(false);
+const CardDetailPanel = ({ card, onCardUpdate, onReturnFunds, onDestroyCard }) => {
+  const [history, setHistory] = useState([]);
+  const [showCardNumber, setShowCardNumber] = useState(false);
+  const [showCVV, setShowCVV] = useState(false);
+  const [freezing, setFreezing] = useState(false);
+  const [destroying, setDestroying] = useState(false);
 
   useEffect(() => {
-    if (card) {
-      fetchCardData();
+    if (card?.id) {
+      fetchHistory();
     }
-  }, [card, activeRange]);
+  }, [card?.id]);
 
-  const fetchCardData = async () => {
+  const fetchHistory = async () => {
     try {
-      setLoading(true);
-      const [historyRes, transRes, docsRes] = await Promise.all([
-        axios.get(`${API}/cards/${card.id}/history?range_type=${activeRange}`),
-        axios.get(`${API}/cards/${card.id}/transactions?range=${activeRange}`),
-        axios.get(`${API}/cards/${card.id}/documents`)
-      ]);
-      setHistoryData(historyRes.data);
-      setTransactions(transRes.data);
-      setDocuments(docsRes.data);
+      const response = await axios.get(`${API}/cards/${card.id}/history`);
+      setHistory(response.data);
     } catch (error) {
-      console.error('Error fetching card data:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error fetching history:', error);
     }
   };
 
-  const handleFreezeToggle = async (checked) => {
+  const handleFreeze = async () => {
+    setFreezing(true);
     try {
-      const response = await axios.patch(`${API}/cards/${card.id}/freeze`, {
-        frozen: checked
+      await axios.patch(`${API}/cards/${card.id}/freeze`, {
+        frozen: !card.frozen
       });
-      onCardUpdate(response.data);
+      onCardUpdate({ ...card, frozen: !card.frozen });
+      toast.success(card.frozen ? 'Tarjeta desbloqueada' : 'Tarjeta congelada');
     } catch (error) {
-      console.error('Error toggling freeze:', error);
+      console.error('Error freezing card:', error);
+      toast.error('Error al actualizar el estado de la tarjeta');
+    } finally {
+      setFreezing(false);
     }
   };
+
+  const handleReturnFunds = async () => {
+    if (card.balance <= 0) {
+      toast.error('No hay fondos para devolver');
+      return;
+    }
+    await onReturnFunds(card.id);
+  };
+
+  const handleDestroy = async () => {
+    if (destroying) return;
+    
+    setDestroying(true);
+    setTimeout(async () => {
+      await onDestroyCard(card.id);
+      setDestroying(false);
+    }, 800);
+  };
+
+  const chartData = history.slice(0, 7).reverse().map(item => ({
+    date: new Date(item.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }),
+    amount: item.amount
+  }));
 
   if (!card) {
-    return (
-      <div className="flex items-center justify-center h-64 text-muted-foreground">
-        Selecciona una tarjeta para ver detalles
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      {/* Main Card Display */}
-      <Card className="p-4 md:p-6 bg-white rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
-          <div>
-            <h2 className="text-lg md:text-xl font-semibold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-              {card.holder_name}
-            </h2>
-            <p className="text-sm text-muted-foreground">•••• {card.last4}</p>
+    <div className={`space-y-4 transition-all duration-800 ${destroying ? 'animate-pulse opacity-50' : ''}`} data-testid="card-detail-panel">
+      {/* Card Info Card */}
+      <Card className="p-4 md:p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+            Detalles de Tarjeta
+          </h3>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleFreeze}
+              disabled={freezing}
+              data-testid="freeze-card-btn"
+            >
+              {card.frozen ? <Unlock size={16} /> : <Lock size={16} />}
+              <span className="ml-2">{card.frozen ? 'Desbloquear' : 'Congelar'}</span>
+            </Button>
           </div>
-          <div className="flex items-center gap-2 md:gap-3">
-            <Snowflake size={16} className={card.frozen ? 'text-[#00CED1]' : 'text-muted-foreground'} />
-            <span className="text-xs md:text-sm font-medium">Congelar tarjeta</span>
-            <Switch
-              data-testid="congelar-tarjeta-switch"
-              checked={card.frozen}
-              onCheckedChange={handleFreezeToggle}
-            />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Número de Tarjeta</p>
+            <div className="flex items-center gap-2">
+              <p className="font-mono text-sm">
+                {showCardNumber ? `4532 ${card.last4} XXXX XXXX` : `•••• •••• •••• ${card.last4}`}
+              </p>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => setShowCardNumber(!showCardNumber)}
+                data-testid="toggle-card-number"
+              >
+                {showCardNumber ? <EyeOff size={14} /> : <Eye size={14} />}
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">CVV</p>
+            <div className="flex items-center gap-2">
+              <p className="font-mono text-sm">{showCVV ? '123' : '•••'}</p>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => setShowCVV(!showCVV)}
+                data-testid="toggle-cvv"
+              >
+                {showCVV ? <EyeOff size={14} /> : <Eye size={14} />}
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Vencimiento</p>
+            <p className="font-mono text-sm">{card.exp_month}/{card.exp_year}</p>
+          </div>
+
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Titular</p>
+            <p className="text-sm">{card.holder_name}</p>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+        <div className="pt-4 border-t flex flex-col sm:flex-row gap-2">
           <Button
-            data-testid="datos-tarjeta-button"
-            variant="secondary"
-            className="justify-start gap-2 bg-[#F7F8FA] hover:bg-[#E5E7EB] text-xs md:text-sm h-9 md:h-10"
+            variant="default"
+            className="flex-1"
+            onClick={handleReturnFunds}
+            disabled={card.balance <= 0}
+            data-testid="return-funds-btn"
           >
-            <FileText size={16} />
-            <span className="hidden sm:inline">Datos</span>
-            <span className="sm:hidden">Datos</span>
+            <ArrowUpRight size={16} className="mr-2" />
+            Enviar Fondos a Bóveda
           </Button>
           <Button
-            data-testid="movimientos-button"
-            variant="secondary"
-            className="justify-start gap-2 bg-[#F7F8FA] hover:bg-[#E5E7EB] text-xs md:text-sm h-9 md:h-10"
+            variant="destructive"
+            className="flex-1"
+            onClick={handleDestroy}
+            disabled={destroying || card.type === 'debit' || card.type === 'credit'}
+            data-testid="destroy-card-btn"
           >
-            <RefreshCcw size={16} />
-            <span>Movimientos</span>
-          </Button>
-          <Button
-            data-testid="documentos-button"
-            variant="secondary"
-            className="justify-start gap-2 bg-[#F7F8FA] hover:bg-[#E5E7EB] text-xs md:text-sm h-9 md:h-10"
-          >
-            <FolderOpen size={16} />
-            <span>Documentos</span>
-          </Button>
-          <Button
-            data-testid="ver-mas-button"
-            variant="secondary"
-            className="justify-start gap-2 bg-[#F7F8FA] hover:bg-[#E5E7EB] text-xs md:text-sm h-9 md:h-10"
-          >
-            <ChevronRight size={16} />
-            <span>Ver más</span>
+            <Trash2 size={16} className="mr-2" />
+            {destroying ? 'Destruyendo...' : 'Destruir Tarjeta'}
           </Button>
         </div>
+        
+        {(card.type === 'debit' || card.type === 'credit') && (
+          <p className="text-xs text-muted-foreground italic text-center">Las tarjetas fijas no pueden ser destruidas</p>
+        )}
       </Card>
 
-      {/* History Chart */}
-      <Card className="p-4 md:p-6 bg-white rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <h3 className="text-base md:text-lg font-semibold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-            Historial
+      {/* Transaction History Chart */}
+      {history.length > 0 && (
+        <Card className="p-4 md:p-6 space-y-4">
+          <h3 className="text-lg font-semibold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+            Historial de Transacciones
           </h3>
-          <Tabs value={activeRange} onValueChange={setActiveRange} className="w-full sm:w-auto">
-            <TabsList data-testid="history-tabs" className="w-full sm:w-auto grid grid-cols-3">
-              <TabsTrigger value="hoy" data-testid="tab-hoy" className="text-xs md:text-sm">Hoy</TabsTrigger>
-              <TabsTrigger value="semana" data-testid="tab-semana" className="text-xs md:text-sm">Semana</TabsTrigger>
-              <TabsTrigger value="personaliza" data-testid="tab-personaliza" className="text-xs md:text-sm">Personaliza</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-        <HistoryChart data={historyData} loading={loading} />
-      </Card>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
+              <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
+              <Tooltip />
+              <Line type="monotone" dataKey="amount" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </Card>
+      )}
 
-      {/* Cashback */}
-      <Card className="p-3 md:p-4 bg-[#E5FCFD] rounded-xl border-0">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 flex-1">
-            <span className="text-xs md:text-sm font-medium text-[#0F766E]">Has obtenido en cashback</span>
-            <div className="w-4 h-4 md:w-5 md:h-5 rounded-full bg-[#00CED1] flex items-center justify-center text-white text-xs flex-shrink-0">?</div>
-          </div>
-          <div className="flex items-center gap-1 md:gap-2">
-            <span className="text-base md:text-lg font-bold text-[#0F766E]" data-testid="cashback-value">
-              ${card.cashback.toFixed(2)}
-            </span>
-            <ChevronRight size={16} className="text-[#0F766E]" />
-          </div>
-        </div>
-      </Card>
-
-      {/* Recent Transactions */}
-      <Card className="p-4 md:p-6 bg-white rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
-        <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-          Movimientos recientes
-        </h3>
-        <div className="space-y-2 md:space-y-3" data-testid="transactions-list">
-          {transactions.slice(0, 5).map((transaction, index) => (
-            <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0 gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-xs md:text-sm truncate">{transaction.description}</div>
-                <div className="text-xs text-muted-foreground">{transaction.category}</div>
-              </div>
-              <div className="text-right flex-shrink-0">
-                <div className={`font-semibold text-xs md:text-sm ${transaction.amount < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                  ${Math.abs(transaction.amount).toFixed(2)}
+      {/* Transaction List */}
+      {history.length > 0 && (
+        <Card className="p-4 md:p-6 space-y-4">
+          <h3 className="text-lg font-semibold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+            Últimas Transacciones
+          </h3>
+          <div className="space-y-2">
+            {history.slice(0, 5).map((item) => (
+              <div key={item.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                <div>
+                  <p className="text-sm font-medium">{item.description}</p>
+                  <p className="text-xs text-muted-foreground">{item.category}</p>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  {new Date(transaction.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
+                <div className="text-right">
+                  <p className={`text-sm font-semibold ${item.amount < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    ${Math.abs(item.amount).toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(item.date).toLocaleDateString('es-ES')}
+                  </p>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </Card>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 };
