@@ -284,6 +284,10 @@ async def seed_data():
 from routes_goals import router as goals_router
 api_router.include_router(goals_router)
 
+# Include subscriptions routes
+from routes_subscriptions import router as subscriptions_router
+api_router.include_router(subscriptions_router)
+
 # Include the router in the main app
 app.include_router(api_router)
 

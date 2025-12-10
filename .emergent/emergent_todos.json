@@ -1,6 +1,10 @@
 [
   {
     "content": "Implement Subscriptions and Loans sections",
+    "status": "completed"
+  },
+  {
+    "content": "Test Subscriptions and Loans functionality",
     "status": "in_progress"
   }
 ]
