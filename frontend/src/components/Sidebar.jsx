@@ -84,10 +84,10 @@ const Sidebar = ({ isMobileOpen, onMobileClose }) => {
 
       <div className={`px-4 py-3 border-t border-black/10 flex-shrink-0 ${collapsed && !isMobile ? 'text-center' : ''}`} data-testid="sidebar-version">
         <p className={`text-xs text-[#111827]/60 font-medium ${collapsed && !isMobile ? 'transform rotate-90 origin-center whitespace-nowrap' : ''}`}>
-          {collapsed && !isMobile ? 'v1.0' : 'Versión 1.0.0'}
+          {collapsed && !isMobile ? 'v1.5.1' : 'Versión 1.5.1'}
         </p>
         {(!collapsed || isMobile) && (
-          <p className="text-xs text-[#111827]/40 mt-1">© 2024 Aira</p>
+          <p className="text-xs text-[#111827]/40 mt-1">© 2025 aira</p>
         )}
       </div>
     </>
