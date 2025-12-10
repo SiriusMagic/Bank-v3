@@ -1,24 +1,27 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, CreditCard, Activity, FileText, Settings, Users, Target, Gift, DollarSign, HelpCircle, ChevronLeft, ChevronRight, Repeat, Wallet, TrendingUp, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
 
 const Sidebar = ({ isMobileOpen, onMobileClose }) => {
   const [collapsed, setCollapsed] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const navItems = [
-    { icon: Home, label: 'Inicio', active: false },
-    { icon: Wallet, label: 'Cuentas', active: false },
-    { icon: CreditCard, label: 'Tarjetas', active: true },
-    { icon: Repeat, label: 'Transferencia', active: false },
-    { icon: Target, label: 'Misiones', active: false },
-    { icon: Target, label: 'Metas', active: false },
-    { icon: Gift, label: 'Subscripción', active: false },
-    { icon: DollarSign, label: 'Préstamos', active: false },
-    { icon: TrendingUp, label: 'Ingresos y egresos totales', active: false },
-    { icon: Users, label: 'Perfil', active: false },
-    { icon: Settings, label: 'Ajustes', active: false },
-    { icon: HelpCircle, label: 'Ayuda', active: false },
+    { icon: Home, label: 'Inicio', path: '/' },
+    { icon: Wallet, label: 'Cuentas', path: '/cuentas' },
+    { icon: CreditCard, label: 'Tarjetas', path: '/tarjetas' },
+    { icon: Repeat, label: 'Transferencia', path: '/transferencia' },
+    { icon: Target, label: 'Misiones', path: '/misiones' },
+    { icon: Target, label: 'Metas', path: '/metas' },
+    { icon: Gift, label: 'Subscripción', path: '/subscripcion' },
+    { icon: DollarSign, label: 'Préstamos', path: '/prestamos' },
+    { icon: TrendingUp, label: 'Ingresos y egresos totales', path: '/ingresos-egresos' },
+    { icon: Users, label: 'Perfil', path: '/perfil' },
+    { icon: Settings, label: 'Ajustes', path: '/ajustes' },
+    { icon: HelpCircle, label: 'Ayuda', path: '/ayuda' },
   ];
 
   const toggleSidebar = () => {

@@ -1,6 +1,10 @@
 [
   {
     "content": "Implement Goals section with backend and frontend",
+    "status": "completed"
+  },
+  {
+    "content": "Test Goals functionality end-to-end",
     "status": "in_progress"
   }
 ]
