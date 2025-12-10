@@ -288,6 +288,10 @@ api_router.include_router(goals_router)
 from routes_subscriptions import router as subscriptions_router
 api_router.include_router(subscriptions_router)
 
+# Include vault routes
+from routes_vault import router as vault_router
+api_router.include_router(vault_router)
+
 # Include the router in the main app
 app.include_router(api_router)
 

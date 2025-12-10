@@ -7,6 +7,7 @@ import Cards from './pages/Cards';
 import Goals from './pages/Goals';
 import Subscriptions from './pages/Subscriptions';
 import Loans from './pages/Loans';
+import Vault from './pages/Vault';
 import { Button } from './components/ui/button';
 import { Search, Menu } from 'lucide-react';
 
@@ -128,6 +129,7 @@ function App() {
           {/* Content */}
           <Routes>
             <Route path="/" element={<Navigate to="/tarjetas" replace />} />
+            <Route path="/caja-fuerte" element={<Vault />} />
             <Route path="/tarjetas" element={<Cards />} />
             <Route path="/metas" element={<Goals />} />
             <Route path="/subscripcion" element={<Subscriptions />} />

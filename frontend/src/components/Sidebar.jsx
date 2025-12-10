@@ -11,7 +11,7 @@ const Sidebar = ({ isMobileOpen, onMobileClose }) => {
 
   const navItems = [
     { icon: Home, label: 'Inicio', path: '/' },
-    { icon: Wallet, label: 'Cuentas', path: '/cuentas' },
+    { icon: Wallet, label: 'Caja Fuerte', path: '/caja-fuerte' },
     { icon: CreditCard, label: 'Tarjetas', path: '/tarjetas' },
     { icon: Repeat, label: 'Transferencia', path: '/transferencia' },
     { icon: Target, label: 'Misiones', path: '/misiones' },
