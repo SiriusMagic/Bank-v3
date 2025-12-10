@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button } from './ui/button';
-import { Snowflake, Lock, Unlock, Download, Eye, EyeOff, ArrowUpRight, Trash2 } from 'lucide-react';
+import { Lock, Unlock, Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Copy, Trash2, Shield } from 'lucide-react';
 import { Card } from './ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast } from './ui/sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -15,6 +18,13 @@ const CardDetailPanel = ({ card, onCardUpdate, onReturnFunds, onDestroyCard }) =
   const [showCVV, setShowCVV] = useState(false);
   const [freezing, setFreezing] = useState(false);
   const [destroying, setDestroying] = useState(false);
+  const [showSendDialog, setShowSendDialog] = useState(false);
+  const [showReceiveDialog, setShowReceiveDialog] = useState(false);
+  const [sendAmount, setSendAmount] = useState('');
+  const [receiveAmount, setReceiveAmount] = useState('');
+
+  const isDisposable = card?.type === 'disposable' || card?.type === 'virtual';
+  const isFixed = card?.type === 'debit' || card?.type === 'credit';
 
   useEffect(() => {
     if (card?.id) {
@@ -47,6 +57,39 @@ const CardDetailPanel = ({ card, onCardUpdate, onReturnFunds, onDestroyCard }) =
     }
   };
 
+  const handleSendMoney = async () => {
+    if (!sendAmount || parseFloat(sendAmount) <= 0) {
+      toast.error('Ingrese un monto válido');
+      return;
+    }
+    try {
+      await axios.post(`${API}/cards/${card.id}/send`, { amount: parseFloat(sendAmount) });
+      toast.success(`$${parseFloat(sendAmount).toFixed(2)} enviados exitosamente`);
+      setShowSendDialog(false);
+      setSendAmount('');
+      // Refresh card data
+      onCardUpdate({ ...card, balance: card.balance - parseFloat(sendAmount) });
+    } catch (error) {
+      toast.error('Error al enviar dinero');
+    }
+  };
+
+  const handleReceiveMoney = async () => {
+    if (!receiveAmount || parseFloat(receiveAmount) <= 0) {
+      toast.error('Ingrese un monto válido');
+      return;
+    }
+    try {
+      await axios.post(`${API}/cards/${card.id}/receive`, { amount: parseFloat(receiveAmount) });
+      toast.success(`$${parseFloat(receiveAmount).toFixed(2)} recibidos exitosamente`);
+      setShowReceiveDialog(false);
+      setReceiveAmount('');
+      onCardUpdate({ ...card, balance: card.balance + parseFloat(receiveAmount) });
+    } catch (error) {
+      toast.error('Error al recibir dinero');
+    }
+  };
+
   const handleReturnFunds = async () => {
     if (card.balance <= 0) {
       toast.error('No hay fondos para devolver');
@@ -63,6 +106,11 @@ const CardDetailPanel = ({ card, onCardUpdate, onReturnFunds, onDestroyCard }) =
       await onDestroyCard(card.id);
       setDestroying(false);
     }, 800);
+  };
+
+  const copyToClipboard = (text, label) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} copiado al portapapeles`);
   };
 
   const chartData = history.slice(0, 7).reverse().map(item => ({
@@ -96,6 +144,7 @@ const CardDetailPanel = ({ card, onCardUpdate, onReturnFunds, onDestroyCard }) =
           </div>
         </div>
 
+        {/* Card Details with Copy */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <p className="text-xs text-muted-foreground mb-1">Número de Tarjeta</p>
@@ -111,6 +160,15 @@ const CardDetailPanel = ({ card, onCardUpdate, onReturnFunds, onDestroyCard }) =
                 data-testid="toggle-card-number"
               >
                 {showCardNumber ? <EyeOff size={14} /> : <Eye size={14} />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => copyToClipboard(`4532${card.last4}XXXXXXXX`, 'Número de tarjeta')}
+                data-testid="copy-card-number"
+              >
+                <Copy size={14} />
               </Button>
             </div>
           </div>
@@ -128,47 +186,122 @@ const CardDetailPanel = ({ card, onCardUpdate, onReturnFunds, onDestroyCard }) =
               >
                 {showCVV ? <EyeOff size={14} /> : <Eye size={14} />}
               </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => copyToClipboard('123', 'CVV')}
+                data-testid="copy-cvv"
+              >
+                <Copy size={14} />
+              </Button>
             </div>
           </div>
 
           <div>
             <p className="text-xs text-muted-foreground mb-1">Vencimiento</p>
-            <p className="font-mono text-sm">{card.exp_month}/{card.exp_year}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-mono text-sm">{card.exp_month}/{card.exp_year}</p>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => copyToClipboard(`${card.exp_month}/${card.exp_year}`, 'Fecha de vencimiento')}
+                data-testid="copy-expiry"
+              >
+                <Copy size={14} />
+              </Button>
+            </div>
           </div>
 
           <div>
             <p className="text-xs text-muted-foreground mb-1">Titular</p>
-            <p className="text-sm">{card.holder_name}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm">{card.holder_name}</p>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => copyToClipboard(card.holder_name, 'Titular')}
+                data-testid="copy-holder"
+              >
+                <Copy size={14} />
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="pt-4 border-t flex flex-col sm:flex-row gap-2">
-          <Button
-            variant="default"
-            className="flex-1"
-            onClick={handleReturnFunds}
-            disabled={card.balance <= 0}
-            data-testid="return-funds-btn"
-          >
-            <ArrowUpRight size={16} className="mr-2" />
-            Enviar Fondos a Bóveda
-          </Button>
-          <Button
-            variant="destructive"
-            className="flex-1"
-            onClick={handleDestroy}
-            disabled={destroying || card.type === 'debit' || card.type === 'credit'}
-            data-testid="destroy-card-btn"
-          >
-            <Trash2 size={16} className="mr-2" />
-            {destroying ? 'Destruyendo...' : 'Destruir Tarjeta'}
-          </Button>
-        </div>
-        
-        {(card.type === 'debit' || card.type === 'credit') && (
-          <p className="text-xs text-muted-foreground italic text-center">Las tarjetas fijas no pueden ser destruidas</p>
+        {/* Cashback Info */}
+        {card.cashback > 0 && (
+          <div className="pt-2 border-t">
+            <p className="text-sm text-muted-foreground">Cashback Acumulado</p>
+            <p className="text-lg font-semibold text-green-600">${card.cashback.toFixed(2)}</p>
+            {isDisposable && (
+              <p className="text-xs text-muted-foreground italic">Solo compras nacionales/internacionales y servicios (luz, agua)</p>
+            )}
+          </div>
         )}
+
+        {/* Action Buttons - Different for Fixed vs Disposable */}
+        <div className="pt-4 border-t space-y-2">
+          {isFixed && (
+            <>
+              {/* Fixed Cards: Send, Receive, Insurance */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <Button
+                  variant="default"
+                  onClick={() => setShowSendDialog(true)}
+                  data-testid="send-money-btn"
+                >
+                  <ArrowUpRight size={16} className="mr-2" />
+                  Enviar Dinero
+                </Button>
+                <Button
+                  variant="default"
+                  onClick={() => setShowReceiveDialog(true)}
+                  data-testid="receive-money-btn"
+                >
+                  <ArrowDownLeft size={16} className="mr-2" />
+                  Recibir Dinero
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => window.location.href = '/seguros'}
+                  data-testid="insurance-btn"
+                >
+                  <Shield size={16} className="mr-2" />
+                  Seguros
+                </Button>
+              </div>
+            </>
+          )}
+
+          {isDisposable && (
+            <>
+              {/* Disposable Cards: Return Funds, Destroy */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <Button
+                  variant="default"
+                  onClick={handleReturnFunds}
+                  disabled={card.balance <= 0}
+                  data-testid="return-funds-btn"
+                >
+                  <ArrowUpRight size={16} className="mr-2" />
+                  Enviar a Bóveda
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDestroy}
+                  disabled={destroying}
+                  data-testid="destroy-card-btn"
+                >
+                  <Trash2 size={16} className="mr-2" />
+                  {destroying ? 'Destruyendo...' : 'Destruir Tarjeta'}
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
       </Card>
 
       {/* Transaction History Chart */}
@@ -215,6 +348,53 @@ const CardDetailPanel = ({ card, onCardUpdate, onReturnFunds, onDestroyCard }) =
           </div>
         </Card>
       )}
+
+      {/* Send Money Dialog */}
+      <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enviar Dinero</DialogTitle>
+            <DialogDescription>Desde tu tarjeta {card.brand} •••• {card.last4}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="send-amount">Monto</Label>
+              <Input
+                id="send-amount"
+                type="number"
+                placeholder="0.00"
+                value={sendAmount}
+                onChange={(e) => setSendAmount(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Saldo disponible: ${card.balance.toFixed(2)}</p>
+            </div>
+            <Button onClick={handleSendMoney} className="w-full">Enviar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Receive Money Dialog */}
+      <Dialog open={showReceiveDialog} onOpenChange={setShowReceiveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Recibir Dinero</DialogTitle>
+            <DialogDescription>A tu tarjeta {card.brand} •••• {card.last4}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="receive-amount">Monto</Label>
+              <Input
+                id="receive-amount"
+                type="number"
+                placeholder="0.00"
+                value={receiveAmount}
+                onChange={(e) => setReceiveAmount(e.target.value)}
+              />
+            </div>
+            <Button onClick={handleReceiveMoney} className="w-full">Recibir</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
