@@ -5,6 +5,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Sidebar from './components/Sidebar';
 import Cards from './pages/Cards';
 import Goals from './pages/Goals';
+import Subscriptions from './pages/Subscriptions';
+import Loans from './pages/Loans';
 import { Button } from './components/ui/button';
 import { Search, Menu } from 'lucide-react';
 
