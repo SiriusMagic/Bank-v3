@@ -363,15 +363,6 @@ async def get_destroyed_history():
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-                )
-        
-        # Delete the card
-        await db.cards.delete_one({"_id": ObjectId(card_id)})
-        
-        return {"success": True, "amount_returned": amount}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
 @api_router.post("/dev/seed")
 async def seed_data():
     """Seed the database with sample data"""
