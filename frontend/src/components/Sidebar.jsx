@@ -61,20 +61,26 @@ const Sidebar = ({ isMobileOpen, onMobileClose }) => {
       </div>
 
       <nav className="flex-1 px-2 space-y-0.5 overflow-y-auto">
-        {navItems.map((item, index) => (
-          <button
-            key={index}
-            onClick={isMobile ? onMobileClose : undefined}
-            className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-[#111827] rounded-md transition-colors ${
-              item.active ? 'bg-black/10' : 'hover:bg-black/5'
-            } ${collapsed && !isMobile ? 'justify-center' : ''}`}
-            data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-            title={collapsed && !isMobile ? item.label : ''}
-          >
-            <item.icon size={18} className="flex-shrink-0" />
-            {(!collapsed || isMobile) && <span className="truncate text-xs">{item.label}</span>}
-          </button>
-        ))}
+        {navItems.map((item, index) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <button
+              key={index}
+              onClick={() => {
+                navigate(item.path);
+                if (isMobile) onMobileClose();
+              }}
+              className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-[#111827] rounded-md transition-colors ${
+                isActive ? 'bg-black/10' : 'hover:bg-black/5'
+              } ${collapsed && !isMobile ? 'justify-center' : ''}`}
+              data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+              title={collapsed && !isMobile ? item.label : ''}
+            >
+              <item.icon size={18} className="flex-shrink-0" />
+              {(!collapsed || isMobile) && <span className="truncate text-xs">{item.label}</span>}
+            </button>
+          );
+        })}
       </nav>
 
       <div className={`px-4 py-3 border-t border-black/10 flex-shrink-0 ${collapsed && !isMobile ? 'text-center' : ''}`} data-testid="sidebar-version">
