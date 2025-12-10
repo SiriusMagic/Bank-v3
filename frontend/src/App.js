@@ -140,6 +140,8 @@ function App() {
             <Route path="/subscripcion" element={<Subscriptions />} />
             <Route path="/prestamos" element={<Loans />} />
             <Route path="/seguros" element={<Insurance />} />
+            <Route path="/perfil" element={<Profile />} />
+            <Route path="/ajustes" element={<Profile />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
