@@ -3,12 +3,14 @@ import './App.css';
 import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
+import Home from './pages/Home';
 import Cards from './pages/Cards';
 import Goals from './pages/Goals';
 import Subscriptions from './pages/Subscriptions';
 import Loans from './pages/Loans';
 import Vault from './pages/Vault';
 import Missions from './pages/Missions';
+import Insurance from './pages/Insurance';
 import { Button } from './components/ui/button';
 import { Search, Menu } from 'lucide-react';
 
