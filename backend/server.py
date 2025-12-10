@@ -375,7 +375,7 @@ async def seed_data():
         cards_data = [
             {
                 "type": "debit",
-                "holder_name": "JACK NOLAN",
+                "holder_name": "ADONIS Yuanshi SARANGO González",
                 "brand": "VISA",
                 "balance": 66603.00,
                 "frozen": False,
@@ -387,7 +387,7 @@ async def seed_data():
             },
             {
                 "type": "credit",
-                "holder_name": "JACK NOLAN",
+                "holder_name": "ADONIS Yuanshi SARANGO González",
                 "brand": "VISA",
                 "balance": 2500.50,
                 "frozen": False,
@@ -399,7 +399,7 @@ async def seed_data():
             },
             {
                 "type": "virtual",
-                "holder_name": "JACK NOLAN",
+                "holder_name": "ADONIS Yuanshi SARANGO González",
                 "brand": "VISA",
                 "balance": 80.00,
                 "frozen": False,
