@@ -103,6 +103,15 @@ async def get_cards():
     cards = await db.cards.find().to_list(1000)
     return serialize_doc(cards)
 
+@api_router.get("/cards/destroyed-history")
+async def get_destroyed_history():
+    """Get history of destroyed disposable cards"""
+    try:
+        history = await db.destroyed_cards.find().sort("destroyed_at", -1).to_list(100)
+        return serialize_doc(history)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @api_router.get("/cards/{card_id}")
 async def get_card(card_id: str):
     """Get specific card details"""
