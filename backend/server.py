@@ -202,6 +202,16 @@ async def get_history(card_id: str, range_type: str = "semana"):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+
+@api_router.get("/cards/destroyed-history")
+async def get_destroyed_history():
+    """Get history of destroyed disposable cards"""
+    try:
+        history = await db.destroyed_cards.find().sort("destroyed_at", -1).to_list(100)
+        return serialize_doc(history)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @api_router.post("/cards/create-disposable")
 async def create_disposable_card(request: CreateDisposableCardRequest):
     """Create a new disposable debit card"""
