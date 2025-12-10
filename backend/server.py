@@ -81,6 +81,10 @@ class Document(BaseModel):
 class FreezeRequest(BaseModel):
     frozen: bool
 
+
+class CreateDisposableCardRequest(BaseModel):
+    brand: str  # VISA or Mastercard
+
 # Routes
 @api_router.get("/")
 async def root():
