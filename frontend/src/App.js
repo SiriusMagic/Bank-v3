@@ -131,14 +131,15 @@ function App() {
 
           {/* Content */}
           <Routes>
-            <Route path="/" element={<Navigate to="/tarjetas" replace />} />
+            <Route path="/" element={<Home />} />
             <Route path="/caja-fuerte" element={<Vault />} />
             <Route path="/tarjetas" element={<Cards />} />
             <Route path="/metas" element={<Goals />} />
             <Route path="/misiones" element={<Missions />} />
             <Route path="/subscripcion" element={<Subscriptions />} />
             <Route path="/prestamos" element={<Loans />} />
-            <Route path="*" element={<Navigate to="/tarjetas" replace />} />
+            <Route path="/seguros" element={<Insurance />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
       </div>
