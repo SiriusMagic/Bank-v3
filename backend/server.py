@@ -84,6 +84,13 @@ class FreezeRequest(BaseModel):
 
 class CreateDisposableCardRequest(BaseModel):
     brand: str  # VISA or Mastercard
+    amount: float
+    holder_name: str
+    exp_month: str
+    exp_year: str
+
+class MoneyTransferRequest(BaseModel):
+    amount: float
 
 # Routes
 @api_router.get("/")
