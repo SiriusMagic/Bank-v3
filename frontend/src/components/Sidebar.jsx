@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, CreditCard, Activity, FileText, Settings, Users, Target, Gift, DollarSign, HelpCircle, ChevronLeft, ChevronRight, Repeat, Wallet, TrendingUp, X } from 'lucide-react';
+import { Home, CreditCard, Activity, FileText, Settings, Users, Target, Gift, DollarSign, HelpCircle, ChevronLeft, ChevronRight, Repeat, Wallet, TrendingUp, X, Shield } from 'lucide-react';
 import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
 
@@ -13,12 +13,11 @@ const Sidebar = ({ isMobileOpen, onMobileClose }) => {
     { icon: Home, label: 'Inicio', path: '/' },
     { icon: Wallet, label: 'Caja Fuerte', path: '/caja-fuerte' },
     { icon: CreditCard, label: 'Tarjetas', path: '/tarjetas' },
-    { icon: Repeat, label: 'Transferencia', path: '/transferencia' },
     { icon: Target, label: 'Misiones', path: '/misiones' },
     { icon: Target, label: 'Metas', path: '/metas' },
     { icon: Gift, label: 'Subscripción', path: '/subscripcion' },
     { icon: DollarSign, label: 'Préstamos', path: '/prestamos' },
-    { icon: TrendingUp, label: 'Ingresos y egresos totales', path: '/ingresos-egresos' },
+    { icon: Shield, label: 'Seguros', path: '/seguros' },
     { icon: Users, label: 'Perfil', path: '/perfil' },
     { icon: Settings, label: 'Ajustes', path: '/ajustes' },
     { icon: HelpCircle, label: 'Ayuda', path: '/ayuda' },
