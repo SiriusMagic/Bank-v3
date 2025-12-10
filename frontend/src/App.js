@@ -11,6 +11,7 @@ import Loans from './pages/Loans';
 import Vault from './pages/Vault';
 import Missions from './pages/Missions';
 import Insurance from './pages/Insurance';
+import Profile from './pages/Profile';
 import { Button } from './components/ui/button';
 import { Search, Menu } from 'lucide-react';
 
