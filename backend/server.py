@@ -452,6 +452,125 @@ async def seed_data():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+# Profile endpoints
+@api_router.get("/profile")
+async def get_profile():
+    """Get user profile"""
+    profile = await db.profiles.find_one({"user_id": "default_user"})
+    if not profile:
+        # Create default profile
+        profile = {
+            "user_id": "default_user",
+            "name": "ADONIS Yuanshi SARANGO González",
+            "email": "sarangoadonis52@gmail.com",
+            "phone": "098 267 3214",
+            "id_number": "1234567890",
+            "id_verified": True,
+            "address": "",
+            "two_factor_enabled": False,
+            "daily_send_limit": 5000.0,
+            "card_spend_limit": 10000.0,
+            "created_at": datetime.now(timezone.utc)
+        }
+        result = await db.profiles.insert_one(profile)
+        profile["_id"] = result.inserted_id
+    
+    return serialize_doc(profile)
+
+@api_router.patch("/profile")
+async def update_profile(updates: dict):
+    """Update user profile"""
+    try:
+        await db.profiles.update_one(
+            {"user_id": "default_user"},
+            {"$set": updates}
+        )
+        return {"message": "Profile updated successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@api_router.post("/profile/toggle-2fa")
+async def toggle_2fa():
+    """Toggle 2FA"""
+    try:
+        profile = await db.profiles.find_one({"user_id": "default_user"})
+        new_state = not profile.get("two_factor_enabled", False)
+        
+        await db.profiles.update_one(
+            {"user_id": "default_user"},
+            {"$set": {"two_factor_enabled": new_state}}
+        )
+        
+        return {"message": "2FA toggled", "enabled": new_state}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@api_router.get("/profile/devices")
+async def get_devices():
+    """Get authorized devices"""
+    devices = await db.devices.find({"user_id": "default_user"}).to_list(100)
+    if not devices:
+        # Create mock devices
+        mock_devices = [
+            {
+                "user_id": "default_user",
+                "name": "098 267 3214",
+                "device_type": "mobile",
+                "is_current": True,
+                "last_access": datetime.now(timezone.utc)
+            }
+        ]
+        for device in mock_devices:
+            result = await db.devices.insert_one(device)
+            device["_id"] = result.inserted_id
+        devices = mock_devices
+    
+    return serialize_doc(devices)
+
+@api_router.delete("/profile/devices/{device_id}")
+async def revoke_device(device_id: str):
+    """Revoke device access"""
+    try:
+        await db.devices.delete_one({"_id": ObjectId(device_id)})
+        return {"message": "Device revoked"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@api_router.get("/profile/settings")
+async def get_settings():
+    """Get user settings"""
+    settings = await db.settings.find_one({"user_id": "default_user"})
+    if not settings:
+        settings = {
+            "user_id": "default_user",
+            "notifications": {
+                "transactions": True,
+                "missions": True,
+                "subscriptions": True
+            },
+            "notificationMethod": "push",
+            "darkMode": False,
+            "language": "es"
+        }
+        result = await db.settings.insert_one(settings)
+        settings["_id"] = result.inserted_id
+    
+    return serialize_doc(settings)
+
+@api_router.patch("/profile/settings")
+async def update_settings(updates: dict):
+    """Update user settings"""
+    try:
+        await db.settings.update_one(
+            {"user_id": "default_user"},
+            {"$set": updates},
+            upsert=True
+        )
+        return {"message": "Settings updated"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 # Include goals routes
 from routes_goals import router as goals_router
 api_router.include_router(goals_router)
