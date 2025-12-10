@@ -130,6 +130,8 @@ function App() {
             <Route path="/" element={<Navigate to="/tarjetas" replace />} />
             <Route path="/tarjetas" element={<Cards />} />
             <Route path="/metas" element={<Goals />} />
+            <Route path="/subscripcion" element={<Subscriptions />} />
+            <Route path="/prestamos" element={<Loans />} />
             <Route path="*" element={<Navigate to="/tarjetas" replace />} />
           </Routes>
         </main>
