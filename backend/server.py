@@ -293,6 +293,29 @@ async def destroy_card(card_id: str):
                 await db.vault.update_one(
                     {"_id": vault["_id"]},
                     {"$inc": {"balance": amount}}
+                )
+        
+        # Save to history
+        history_record = {
+            "card_id": str(card["_id"]),
+            "holder_name": card.get("holder_name"),
+            "brand": card.get("brand"),
+            "last4": card.get("last4"),
+            "initial_amount": card.get("initial_amount", 0),
+            "returned_amount": amount,
+            "destruction_reason": "Manual",
+            "destroyed_at": datetime.now(timezone.utc)
+        }
+        await db.destroyed_cards.insert_one(history_record)
+        
+        # Delete the card
+        await db.cards.delete_one({"_id": ObjectId(card_id)})
+        
+        return {"success": True, "amount_returned": amount}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @api_router.post("/cards/{card_id}/send")
 async def send_money_from_card(card_id: str, request: MoneyTransferRequest):
