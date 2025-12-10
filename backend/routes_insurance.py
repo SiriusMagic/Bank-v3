@@ -91,25 +91,35 @@ INSURANCE_PLANS = [
     }
 ]
 
-@router.get("/insurance/plans")
-async def get_insurance_plans():
-    """Get all insurance plans"""
-    return INSURANCE_PLANS
-
-@router.get("/insurance/policy")
-async def get_user_policy():
-    """Get user's active insurance policy"""
+@router.get("/insurance")
+async def get_insurance_status():
+    """Get user's insurance status"""
     policy = await db.insurance_policies.find_one({"user_id": "default_user", "status": "active"})
-    if not policy:
-        return None
-    return serialize_doc(policy)
+    
+    if policy:
+        return {
+            "has_insurance": True,
+            "plan_name": policy.get("plan_name", "Plan Único"),
+            "plan_type": policy.get("plan_type"),
+            "monthly_fee": policy.get("monthly_fee"),
+            "status": "active"
+        }
+    else:
+        return {
+            "has_insurance": False,
+            "plan_name": None,
+            "plan_type": None,
+            "monthly_fee": None,
+            "status": "none"
+        }
 
-@router.post("/insurance/subscribe")
-async def subscribe_insurance(plan_id: str):
-    """Subscribe to an insurance plan"""
+@router.post("/insurance/activate")
+async def activate_insurance(request: dict):
+    """Activate insurance plan"""
     try:
-        # Find plan
-        plan = next((p for p in INSURANCE_PLANS if p['id'] == plan_id), None)
+        plan_type = request.get("plan_type", "vault_protection")
+        plan = next((p for p in INSURANCE_PLANS if p['plan_type'] == plan_type), None)
+        
         if not plan:
             raise HTTPException(status_code=400, detail="Plan no encontrado")
         
@@ -133,54 +143,44 @@ async def subscribe_insurance(plan_id: str):
         }
         
         result = await db.insurance_policies.insert_one(policy)
-        policy['id'] = str(result.inserted_id)
-        return serialize_doc(policy)
+        return {"message": "Plan activado exitosamente", "policy_id": str(result.inserted_id)}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/insurance/claims")
-async def file_claim(claim: ClaimRequest):
-    """File an insurance claim"""
+@router.post("/insurance/claim")
+async def file_insurance_claim(
+    amount: float,
+    description: str,
+    incident_type: str
+):
+    """File an insurance claim with evidence"""
     try:
-        # Get policy
-        policy = await db.insurance_policies.find_one({"_id": ObjectId(claim.policy_id)})
+        # Get active policy
+        policy = await db.insurance_policies.find_one({"user_id": "default_user", "status": "active"})
         if not policy:
-            raise HTTPException(status_code=404, detail="Póliza no encontrada")
-        
-        if policy['status'] != 'active':
-            raise HTTPException(status_code=400, detail="Póliza no activa")
-        
-        # Calculate reimbursement
-        coverage_percent = policy['coverage_percentage_negligent'] if claim.is_negligent else policy['coverage_percentage_normal']
-        reimbursement = claim.amount_lost * (coverage_percent / 100)
+            raise HTTPException(status_code=400, detail="No tienes un plan activo")
         
         # Create claim
         claim_doc = {
             "user_id": "default_user",
-            "policy_id": claim.policy_id,
-            "claim_type": claim.claim_type,
-            "amount_lost": claim.amount_lost,
-            "description": claim.description,
+            "policy_id": str(policy["_id"]),
+            "incident_type": incident_type,
+            "amount": amount,
+            "description": description,
             "status": "pending",
-            "is_negligent": claim.is_negligent,
-            "coverage_percent": coverage_percent,
-            "expected_reimbursement": reimbursement,
-            "evidence_files": [],
+            "evidence_count": 0,  # Would be updated with actual file uploads
             "created_at": datetime.now(timezone.utc)
         }
         
         result = await db.insurance_claims.insert_one(claim_doc)
-        claim_doc['id'] = str(result.inserted_id)
         
-        return serialize_doc(claim_doc)
+        return {
+            "message": "Reclamo enviado exitosamente",
+            "claim_id": str(result.inserted_id),
+            "status": "pending"
+        }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-
-@router.get("/insurance/claims")
-async def get_user_claims():
-    """Get user's insurance claims"""
-    claims = await db.insurance_claims.find({"user_id": "default_user"}).sort("created_at", -1).to_list(100)
-    return serialize_doc(claims)
 
 @router.post("/dev/seed-insurance")
 async def seed_insurance():
