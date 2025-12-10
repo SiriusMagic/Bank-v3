@@ -293,6 +293,53 @@ async def destroy_card(card_id: str):
                 await db.vault.update_one(
                     {"_id": vault["_id"]},
                     {"$inc": {"balance": amount}}
+
+@api_router.post("/cards/{card_id}/send")
+async def send_money_from_card(card_id: str, request: MoneyTransferRequest):
+    """Send money from card"""
+    try:
+        card = await db.cards.find_one({"_id": ObjectId(card_id)})
+        if not card:
+            raise HTTPException(status_code=404, detail="Card not found")
+        
+        if card.get("balance", 0) < request.amount:
+            raise HTTPException(status_code=400, detail="Insufficient balance")
+        
+        await db.cards.update_one(
+            {"_id": ObjectId(card_id)},
+            {"$inc": {"balance": -request.amount}}
+        )
+        
+        return {"success": True, "amount_sent": request.amount}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@api_router.post("/cards/{card_id}/receive")
+async def receive_money_to_card(card_id: str, request: MoneyTransferRequest):
+    """Receive money to card"""
+    try:
+        card = await db.cards.find_one({"_id": ObjectId(card_id)})
+        if not card:
+            raise HTTPException(status_code=404, detail="Card not found")
+        
+        await db.cards.update_one(
+            {"_id": ObjectId(card_id)},
+            {"$inc": {"balance": request.amount}}
+        )
+        
+        return {"success": True, "amount_received": request.amount}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@api_router.get("/cards/destroyed-history")
+async def get_destroyed_history():
+    """Get history of destroyed disposable cards"""
+    try:
+        history = await db.destroyed_cards.find().sort("destroyed_at", -1).to_list(100)
+        return serialize_doc(history)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
                 )
         
         # Delete the card
